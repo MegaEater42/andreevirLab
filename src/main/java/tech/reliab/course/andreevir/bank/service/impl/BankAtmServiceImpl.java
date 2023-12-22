@@ -86,7 +86,6 @@ public class BankAtmServiceImpl implements BankAtmService {
         }
 
         bankAtm.setTotalMoney(bankAtm.getTotalMoney() + amount);
-        // Добавить добавление денег в оффис и банк
 
         return true;
     }
@@ -113,7 +112,6 @@ public class BankAtmServiceImpl implements BankAtmService {
         }
 
         bankAtm.setTotalMoney(bankAtm.getTotalMoney() - amount);
-        // Вычитать деньги из офиса и банка
 
         return true;
     }

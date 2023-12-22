@@ -67,7 +67,7 @@ public class CreditAccountServiceImpl implements CreditAccountService {
     }
 
     public List<CreditAccount> getAllCreditAccounts() {
-        return new ArrayList<CreditAccount>(creditAccountsTable.values());
+        return new ArrayList<>(creditAccountsTable.values());
     }
 
     public boolean makeMonthlyPayment(CreditAccount account) throws PaymentException {

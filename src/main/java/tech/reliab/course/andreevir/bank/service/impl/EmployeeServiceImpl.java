@@ -62,12 +62,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     public List<Employee> getAllEmployees() {
-        return new ArrayList<>(employeesTable.values());
-    }
-
-    public boolean transferEmployee(Employee employee, BankOffice bankOffice) {
-        // написать перевод сотрудника в новый офис когда будут массивы офисов и тд
-        return true;
+        return new ArrayList<Employee>(employeesTable.values());
     }
 
     public boolean isEmployeeSuitable(Employee employee) {

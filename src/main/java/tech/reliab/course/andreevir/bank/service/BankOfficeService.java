@@ -17,11 +17,9 @@ public interface BankOfficeService {
     public List<BankOffice> getAllOffices();
     public List<Employee> getAllEmployeesByOfficeId(long officeId);
     public boolean installAtm(long bankOfficeId, BankAtm bankAtm);
-    public boolean removeAtm(BankOffice bankOffice, BankAtm bankAtm);
     public boolean depositMoney(BankOffice bankOffice, double amount);
     public boolean withdrawMoney(BankOffice bankOffice, double amount);
     public boolean addEmployee(long bankOfficeId, Employee employee);
-    public boolean removeEmployee(BankOffice bankOffice, Employee employee);
     public List<BankAtm> getAllOfficeAtms(long id);
     public boolean isSuitableBankOffice(BankOffice bankOffice, double sum) throws NotFoundException;
     public List<BankAtm> getSuitableBankAtmInOffice(BankOffice bankOffice, double sum);

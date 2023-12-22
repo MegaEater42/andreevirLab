@@ -19,6 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import static tech.reliab.course.andreevir.bank.util.Constants.ASCII_BLUE_COLOR;
+import static tech.reliab.course.andreevir.bank.util.Constants.ASCII_PURPLE_COLOR;
+import static tech.reliab.course.andreevir.bank.util.Constants.ASCII_RESET;
 import static tech.reliab.course.andreevir.bank.util.Constants.MAX_BANK_INTEREST_RATE;
 import static tech.reliab.course.andreevir.bank.util.Constants.MAX_BANK_RATING;
 import static tech.reliab.course.andreevir.bank.util.Constants.MAX_BANK_TOTAL_MONEY;
@@ -91,11 +94,11 @@ public class BankServiceImpl implements BankService {
             return;
         }
 
-        System.out.println("=========================");
+        System.out.println(ASCII_BLUE_COLOR + "=========================" + ASCII_RESET);
         System.out.println(bank);
         List<BankOffice> offices = officesByBankIdTable.get(id);
         if (offices != null) {
-            System.out.println("Bank offices:");
+            System.out.println(ASCII_PURPLE_COLOR + "Bank offices:" + ASCII_RESET);
             offices.forEach((BankOffice office) -> {
                 bankOfficeService.printBankOfficeData(office.getId());
                 // System.out.println(office);
@@ -104,12 +107,12 @@ public class BankServiceImpl implements BankService {
 
         List<User> users = usersByBankIdTable.get(id);
         if (users != null) {
-            System.out.println("Users:");
+            System.out.println(ASCII_PURPLE_COLOR + "Users:" + ASCII_RESET);
             users.forEach((User user) -> {
                 userService.printUserData(user.getId(), false);
             });
         }
-        System.out.println("=========================");
+        System.out.println(ASCII_BLUE_COLOR + "=========================" + ASCII_RESET);
     }
 
     public Bank getBankById(long id) {
@@ -133,17 +136,7 @@ public class BankServiceImpl implements BankService {
             depositMoney(bankId, bankOffice.getTotalMoney());
             List<BankOffice> bankOffices = officesByBankIdTable.get(bankId);
             bankOffices.add(bankOffice);
-            return true;
-        }
-        return false;
-    }
-
-    public boolean removeOffice(long bankId, BankOffice bankOffice) {
-        Bank bank = getBankById(bankId);
-        int officeIndex = officesByBankIdTable.get(bankId).indexOf(bankOffice);
-
-        if (bank != null && officeIndex >= 0) {
-            officesByBankIdTable.get(bankId).remove(officeIndex);
+            bank.addOffice(bankOffice);
             return true;
         }
         return false;
@@ -162,19 +155,10 @@ public class BankServiceImpl implements BankService {
     public boolean addEmployee(Bank bank, Employee employee) {
         if (bank != null && employee != null) {
             employee.setBank(bank);
+            bank.addEmployee(employee);
             return true;
         }
         return false;
-    }
-
-    public boolean removeEmployee(Bank bank, Employee employee) {
-        // final int newEmployeeCount = bank.getEmployeeCount() - 1;
-        // if (newEmployeeCount < 0) {
-        //   System.out.println("Error: cannot remove employee, bank has no employees");
-        //   return false;
-        // }
-        // bank.setEmployeeCount(newEmployeeCount);
-        return bank != null && employee != null;
     }
 
     public boolean addClient(long bankId, User user) {
@@ -184,19 +168,10 @@ public class BankServiceImpl implements BankService {
             user.setBank(bank);
             List<User> users = usersByBankIdTable.get(bankId);
             users.add(user);
+            bank.addUser(user);
             return true;
         }
         return false;
-    }
-
-    public boolean removeClient(Bank bank, User user) {
-        // int newUserCount = bank.getUserCount() - 1;
-        // if (newsUserCount < 0) {
-        //   System.out.println("Error: cannot remove user, bank has no users");
-        //   return false;
-        // }
-        // bank.setUserCount(newUserCount);
-        return bank != null && user != null;
     }
 
     public boolean depositMoney(long bankId, double amount) {
@@ -299,5 +274,24 @@ public class BankServiceImpl implements BankService {
         }
 
         return banksSuitable;
+    }
+
+    public boolean transferClient(User user, long newBankId) {
+        Bank currentBank = getBankById(user.getBank().getId());
+        Bank newBank = getBankById(newBankId);
+
+        if (currentBank != null && newBank != null) {
+            List<User> users = usersByBankIdTable.get(user.getBank().getId());
+            users.remove(user);
+            currentBank.removeUser(user);
+
+
+            user.setBank(newBank);
+            users.add(user);
+            newBank.addUser(user);
+            return true;
+        }
+
+        return false;
     }
 }

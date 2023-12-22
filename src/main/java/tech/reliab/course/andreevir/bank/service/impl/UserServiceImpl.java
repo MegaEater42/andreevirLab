@@ -1,5 +1,7 @@
 package tech.reliab.course.andreevir.bank.service.impl;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import tech.reliab.course.andreevir.bank.entity.CreditAccount;
 import tech.reliab.course.andreevir.bank.entity.PaymentAccount;
 import tech.reliab.course.andreevir.bank.entity.User;
@@ -9,6 +11,8 @@ import tech.reliab.course.andreevir.bank.exception.UniquenessException;
 import tech.reliab.course.andreevir.bank.service.BankService;
 import tech.reliab.course.andreevir.bank.service.UserService;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -16,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import static tech.reliab.course.andreevir.bank.util.Constants.ASCII_PURPLE_COLOR;
+import static tech.reliab.course.andreevir.bank.util.Constants.ASCII_RESET;
 import static tech.reliab.course.andreevir.bank.util.Constants.MAX_USER_MONTHLY_INCOME;
 
 public class UserServiceImpl implements UserService {
@@ -82,13 +88,13 @@ public class UserServiceImpl implements UserService {
         if (withAccounts) {
             List<PaymentAccount> paymentAccounts = paymentAccountsByUserIdTable.get(id);
             if (paymentAccounts != null) {
-                System.out.println("Payment accounts:");
+                System.out.println(ASCII_PURPLE_COLOR + "Payment accounts:" + ASCII_RESET);
                 paymentAccounts.forEach(System.out::println);
             }
 
             List<CreditAccount> creditAccounts = creditAccountsByUserIdTable.get(id);
             if (creditAccounts != null) {
-                System.out.println("Credit accounts:");
+                System.out.println(ASCII_PURPLE_COLOR + "Credit accounts:" + ASCII_RESET);
                 creditAccounts.forEach(System.out::println);
             }
         }
@@ -105,7 +111,7 @@ public class UserServiceImpl implements UserService {
     }
 
     public List<User> getAllUsers() {
-        return new ArrayList<User>(usersTable.values());
+        return new ArrayList<>(usersTable.values());
     }
 
     public boolean addPaymentAccount(long userId, PaymentAccount paymentAccount) {
@@ -113,6 +119,8 @@ public class UserServiceImpl implements UserService {
         if (user != null) {
             List<PaymentAccount> userPaymentAccounts = paymentAccountsByUserIdTable.get(userId);
             userPaymentAccounts.add(paymentAccount);
+            user.addAccount(paymentAccount);
+            user.getBank().addAccount(paymentAccount);
             return true;
         }
 
@@ -124,6 +132,8 @@ public class UserServiceImpl implements UserService {
         if (user != null) {
             List<CreditAccount> userCreditAccounts = creditAccountsByUserIdTable.get(userId);
             userCreditAccounts.add(creditAccount);
+            user.addAccount(creditAccount);
+            user.getBank().addAccount(creditAccount);
             return true;
         }
 
@@ -134,6 +144,10 @@ public class UserServiceImpl implements UserService {
         return paymentAccountsByUserIdTable.get(userId);
     }
 
+    public List<CreditAccount> getAllCreditAccountsByUserId(long userId) {
+        return creditAccountsByUserIdTable.get(userId);
+    }
+
     public PaymentAccount getBestPaymentAccount(long id) throws NotFoundException, NoPaymentAccountException {
         List<PaymentAccount> paymentAccounts = getAllPaymentAccountsByUserId(id);
 
@@ -141,5 +155,31 @@ public class UserServiceImpl implements UserService {
                 .stream()
                 .min(Comparator.comparing(PaymentAccount::getBalance))
                 .orElseThrow(NoPaymentAccountException::new);
+    }
+
+    public boolean transferUserToAnotherBank(User user, long newBankId) {
+        return bankService.transferClient(user, newBankId);
+    }
+
+    public boolean exportUserAccountsToTxtFile(long userId, long bankId) throws NoPaymentAccountException {
+        List<CreditAccount> userCreditAccounts = getAllCreditAccountsByUserId(userId);
+
+        if (userCreditAccounts.isEmpty())
+            throw new NoPaymentAccountException();
+
+        try {
+            // PrintWriter out = new PrintWriter("user_" + userId + "_accounts_of_bank_" + bankId + ".txt");
+            PrintWriter out = new PrintWriter("users.txt");
+            Gson gson = new GsonBuilder()
+                    .setPrettyPrinting()
+                    .excludeFieldsWithoutExposeAnnotation()
+                    .create();
+            out.println(gson.toJson(userCreditAccounts));
+            out.close();
+            return true;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

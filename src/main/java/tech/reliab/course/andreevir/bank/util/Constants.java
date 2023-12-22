@@ -8,6 +8,11 @@ public class Constants {
     public static final double MAX_BANK_TOTAL_MONEY = 1000000;
     public static final double MAX_BANK_INTEREST_RATE = 20;
     public static final double MAX_USER_MONTHLY_INCOME = 10000;
+    public static final String ASCII_RED_COLOR = "\u001B[31m";
+    public static final String ASCII_GREEN_COLOR = "\u001B[32m";
+    public static final String ASCII_BLUE_COLOR = "\u001B[34m";
+    public static final String ASCII_PURPLE_COLOR = "\u001B[35m";
+    public static final String ASCII_RESET = "\u001B[0m";
 
     public static final List<String> PERSON_NAMES = new ArrayList<>() {
         {

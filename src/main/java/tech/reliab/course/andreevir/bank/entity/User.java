@@ -1,15 +1,19 @@
 package tech.reliab.course.andreevir.bank.entity;
 
+import tech.reliab.course.andreevir.bank.entity.common.Account;
 import tech.reliab.course.andreevir.bank.entity.common.Person;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class User extends Person {
     private String placeOfWork = "null";
     private double monthlyIncome = 0;
     private Bank bank = null;
     private double creditRating = 0;
+    private List<Account> accounts = new ArrayList<>();
 
     public User() {
         super();
@@ -86,5 +90,13 @@ public class User extends Person {
 
     public double getCreditRating() {
         return this.creditRating;
+    }
+
+    public void addAccount(Account account) {
+        accounts.add(account);
+    }
+
+    public List<Account> geAccounts() {
+        return accounts;
     }
 }

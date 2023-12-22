@@ -15,6 +15,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static tech.reliab.course.andreevir.bank.util.Constants.ASCII_PURPLE_COLOR;
+import static tech.reliab.course.andreevir.bank.util.Constants.ASCII_RESET;
+
 public class BankOfficeServiceImpl implements BankOfficeService {
     private final Map<Long, BankOffice> bankOfficesTable = new HashMap<>();
     private final Map<Long, List<Employee>> employeesByOfficeIdTable = new HashMap<>();
@@ -83,13 +86,13 @@ public class BankOfficeServiceImpl implements BankOfficeService {
         System.out.println(bankOffice);
         List<Employee> employees = employeesByOfficeIdTable.get(id);
         if (employees != null) {
-            System.out.println("Employees:");
+            System.out.println(ASCII_PURPLE_COLOR + "Employees:" + ASCII_RESET);
             employees.forEach(System.out::println);
         }
 
         List<BankAtm> atms = atmsByOfficeIdTable.get(id);
         if (atms != null) {
-            System.out.println("ATMs:");
+            System.out.println(ASCII_PURPLE_COLOR + "ATMs:" + ASCII_RESET);
             atms.forEach(System.out::println);
         }
     }
@@ -126,20 +129,8 @@ public class BankOfficeServiceImpl implements BankOfficeService {
             bankAtm.setBank(bankOffice.getBank());
             List<BankAtm> officeAtms = atmsByOfficeIdTable.get(bankOffice.getId());
             officeAtms.add(bankAtm);
-            return true;
-        }
-        return false;
-    }
-
-    public boolean removeAtm(BankOffice bankOffice, BankAtm bankAtm) {
-        if (bankOffice != null && bankAtm != null) {
-            // Добавить поиск банкомата в офисе / банка и удаление оттуда
-            // final int newAtmCountOffice = bankOffice.getAtmCount() - 1;
-            // if (newAtmCountOffice < 0) {
-            //   System.out.println("Error: cannot remove ATM, office has no ATMs");
-            //   return false;
-            // }
-
+            bankOffice.addAtm(bankAtm);
+            bankOffice.getBank().addAtm(bankAtm);
             return true;
         }
         return false;
@@ -162,7 +153,6 @@ public class BankOfficeServiceImpl implements BankOfficeService {
         }
 
         bankOffice.setTotalMoney(bankOffice.getTotalMoney() + amount);
-        // Добавить добавление денег в банк
 
         return true;
     }
@@ -189,7 +179,6 @@ public class BankOfficeServiceImpl implements BankOfficeService {
         }
 
         bankOffice.setTotalMoney(bankOffice.getTotalMoney() - amount);
-        // Добавить вычитание денег из банка
 
         return true;
     }
@@ -202,15 +191,8 @@ public class BankOfficeServiceImpl implements BankOfficeService {
             employee.setBank(bankOffice.getBank());
             List<Employee> officeEmployees = employeesByOfficeIdTable.get(bankOffice.getId());
             officeEmployees.add(employee);
-            return true;
-        }
-        return false;
-    }
-
-    public boolean removeEmployee(BankOffice bankOffice, Employee employee) {
-        if (bankOffice != null && employee != null) {
-            // добавить поиск работника в офисе и его удаление
-            // добавить поиск работника в банке и его удаление
+            bankOffice.addEmployee(employee);
+            bankOffice.getBank().addEmployee(employee);
             return true;
         }
         return false;

@@ -32,6 +32,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
+import static tech.reliab.course.andreevir.bank.util.Constants.ASCII_GREEN_COLOR;
+import static tech.reliab.course.andreevir.bank.util.Constants.ASCII_RED_COLOR;
+import static tech.reliab.course.andreevir.bank.util.Constants.ASCII_RESET;
 import static tech.reliab.course.andreevir.bank.util.Constants.BANK_ROLES;
 import static tech.reliab.course.andreevir.bank.util.Constants.COMPANY_NAMES;
 import static tech.reliab.course.andreevir.bank.util.Constants.PERSON_NAMES;
@@ -53,6 +56,8 @@ public class Main {
         bankService.setUserService(userService);
         PaymentAccountService paymentAccountService = new PaymentAccountServiceImpl(userService);
         CreditAccountService creditAccountService = new CreditAccountServiceImpl(userService);
+        paymentAccountService.setCreditAccountService(creditAccountService);
+        paymentAccountService.setBankService(bankService);
 
         try {
             // Создание банков
@@ -108,7 +113,6 @@ public class Main {
                             BankAtmStatus.WORKING,
                             office.getBank(),
                             office,
-                            bankOfficeService.getAllEmployeesByOfficeId(office.getId()).get(random.nextInt(bankOfficeService.getAllEmployeesByOfficeId(office.getId()).size())),
                             true,
                             true,
                             random.nextDouble() * 15000,
@@ -168,100 +172,149 @@ public class Main {
                 }
             }
 
-            System.out.println("\nWelcome to lab3.");
+            System.out.println("\nWelcome to lab4.");
             System.out.println("Number of banks in system: " + bankService.getAllBanks().size());
             for (Bank bank : bankService.getAllBanks()) {
                 System.out.println("id: " + bank.getId() + " - " + bank.getName());
             }
 
+            label:
             while (true) {
                 try {
                     System.out.println("\nChoose an action: ");
                     System.out.println("1) check bank data by bank id");
                     System.out.println("2) check user data by user id");
                     System.out.println("3) apply for a credit");
-                    System.out.println("4) quit");
+                    System.out.println("4) export user accounts by bank id to .txt file");
+                    System.out.println("5) import accounts from .txt file and move them to another bank");
+                    System.out.println("6) quit program");
 
                     String action = scanner.nextLine();
 
-                    if (action.equals("1")) {
-                        System.out.println("Enter bank id:");
-                        int bankIdToPrint = scanner.nextInt();
-                        scanner.nextLine();
-                        bankService.printBankData(bankIdToPrint);
-                    } else if (action.equals("2")) {
-                        System.out.println("Enter user id:");
-                        int userIdToPrint = scanner.nextInt();
-                        scanner.nextLine();
-                        userService.printUserData(userIdToPrint, true);
-                    } else if (action.equals("3")) {
-                        System.out.println("Which user wants to apply for a credit?");
-                        for (User user : userService.getAllUsers()) {
-                            System.out.println("id: " + user.getId() + " - " + user.getName());
-                        }
+                    switch (action) {
+                        case "1":
+                            System.out.println("Enter bank id:");
+                            int bankIdToPrint = scanner.nextInt();
+                            scanner.nextLine();
+                            bankService.printBankData(bankIdToPrint);
+                            break;
+                        case "2":
+                            System.out.println("Enter user id:");
+                            int userIdToPrint = scanner.nextInt();
+                            scanner.nextLine();
+                            userService.printUserData(userIdToPrint, true);
+                            break;
+                        case "3": {
+                            System.out.println("Which user wants to apply for a credit?");
+                            for (User user : userService.getAllUsers()) {
+                                System.out.println("id: " + user.getId() + " - " + user.getName());
+                            }
 
-                        System.out.println("Enter user id:");
-                        int userId = scanner.nextInt();
-                        scanner.nextLine();
+                            System.out.println("Enter user id:");
+                            int userId = scanner.nextInt();
+                            scanner.nextLine();
 
-                        System.out.println("Enter credit amount:");
-                        double amount = scanner.nextDouble();
-                        scanner.nextLine();
+                            System.out.println("Enter credit amount:");
+                            double amount = scanner.nextDouble();
+                            scanner.nextLine();
 
-                        System.out.println("Enter duration in months:");
-                        int months = scanner.nextInt();
-                        scanner.nextLine();
+                            System.out.println("Enter duration in months:");
+                            int months = scanner.nextInt();
+                            scanner.nextLine();
 
-                        List<Bank> suitableBanks = bankService.getBanksSuitable(amount, months);
-                        System.out.println("List of suitable banks:");
-                        for (Bank bank : suitableBanks) {
-                            System.out.println("id: " + bank.getId() + " - " + bank.getName());
-                        }
+                            List<Bank> suitableBanks = bankService.getBanksSuitable(amount, months);
+                            System.out.println("List of suitable banks:");
+                            for (Bank bank : suitableBanks) {
+                                System.out.println("id: " + bank.getId() + " - " + bank.getName());
+                            }
 
-                        System.out.println("Enter chosen bank id:");
-                        int bankId = scanner.nextInt();
-                        scanner.nextLine();
-                        Bank bank = bankService.getBankById(bankId);
-                        BankOffice bankOffice = bankService.getBankOfficeSuitableInBank(bank, amount).get(0);
-                        Employee employee = bankOfficeService.getSuitableEmployeeInOffice(bankOffice).get(0);
+                            System.out.println("Enter chosen bank id:");
+                            int bankId = scanner.nextInt();
+                            scanner.nextLine();
+                            Bank bank = bankService.getBankById(bankId);
+                            BankOffice bankOffice = bankService.getBankOfficeSuitableInBank(bank, amount).get(0);
+                            Employee employee = bankOfficeService.getSuitableEmployeeInOffice(bankOffice).get(0);
 
-                        PaymentAccount paymentAccount;
-                        // Если у клиента нет платежного счета - следует его создать
-                        try {
-                            paymentAccount = userService.getBestPaymentAccount(userId);
-                        } catch (NoPaymentAccountException e) {
-                            paymentAccount = paymentAccountService.create(new PaymentAccount(
+                            PaymentAccount paymentAccount;
+                            // Если у клиента нет платежного счета - следует его создать
+                            try {
+                                paymentAccount = userService.getBestPaymentAccount(userId);
+                            } catch (NoPaymentAccountException e) {
+                                paymentAccount = paymentAccountService.create(new PaymentAccount(
+                                        userService.getUserById(userId),
+                                        userService.getUserById(userId).getBank(),
+                                        0
+                                ));
+                            }
+
+                            CreditAccount creditAccount = creditAccountService.create(new CreditAccount(
                                     userService.getUserById(userId),
-                                    userService.getUserById(userId).getBank(),
-                                    0
+                                    bank,
+                                    LocalDate.now(),
+                                    LocalDate.now().plusMonths(months),
+                                    months,
+                                    amount,
+                                    amount,
+                                    0,
+                                    bank.getInterestRate(),
+                                    employee,
+                                    paymentAccount
                             ));
+                            if (bankService.approveCredit(bank, creditAccount, employee)) {
+                                System.out.println("Apply for credit was approved!");
+                                System.out.println("credit account id: " + creditAccount.getId());
+                            } else {
+                                System.out.println("Credit was not approved");
+                            }
+                            break;
                         }
+                        case "4": {
+                            System.out.println("Available users:");
+                            for (User user : userService.getAllUsers()) {
+                                System.out.println("id: " + user.getId() + " - " + user.getName());
+                            }
 
-                        CreditAccount creditAccount = creditAccountService.create(new CreditAccount(
-                                userService.getUserById(userId),
-                                bank,
-                                LocalDate.now(),
-                                LocalDate.now().plusMonths(months),
-                                months,
-                                amount,
-                                amount,
-                                0,
-                                bank.getInterestRate(),
-                                employee,
-                                paymentAccount
-                        ));
-                        if (bankService.approveCredit(bank, creditAccount, employee)) {
-                            System.out.println("Apply for credit was approved!");
-                            System.out.println("credit account id: " + creditAccount.getId());
-                        } else {
-                            System.out.println("Credit was not approved");
+                            System.out.println("Enter user id:");
+                            int userId = scanner.nextInt();
+                            scanner.nextLine();
+
+                            System.out.println("Enter bank id:");
+                            int bankId = scanner.nextInt();
+                            scanner.nextLine();
+
+                            boolean success = userService.exportUserAccountsToTxtFile(userId, bankId);
+
+                            if (success) {
+                                System.out.println(ASCII_GREEN_COLOR + "Export done successfully" + ASCII_RESET);
+                            } else {
+                                System.out.println(ASCII_RED_COLOR + "Export operation wasn't done" + ASCII_RESET);
+                            }
+                            break;
                         }
-                    } else if (action.equals("4")) {
-                        break;
-                    } else {
-                        System.out.println("Error: unknown action. Please, try again");
+                        case "5": {
+                            System.out.println("Enter file name:");
+                            String fileName = scanner.nextLine();
+
+                            System.out.println("Enter new bank id:");
+                            int newBankId = scanner.nextInt();
+                            scanner.nextLine();
+
+                            boolean success = paymentAccountService.importAccountsFromTxtAndTransferToAnotherBank(fileName, newBankId);
+
+                            if (success) {
+                                System.out.println(ASCII_GREEN_COLOR + "Import done successfully" + ASCII_RESET);
+                            } else {
+                                System.out.println(ASCII_RED_COLOR + "Import operation wasn't done" + ASCII_RESET);
+                            }
+                            break;
+                        }
+                        case "6":
+                            break label;
+                        default:
+                            System.out.println("Error: unknown action. Please, try again");
+                            break;
                     }
-                } catch (CreditException | NotFoundException e) {
+                } catch (CreditException | NotFoundException | NoPaymentAccountException e) {
                     System.err.println(e.getMessage());
                 }
             }

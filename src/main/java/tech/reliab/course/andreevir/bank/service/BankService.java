@@ -19,17 +19,19 @@ public interface BankService {
     public Bank getBankById(long id);
     public List<Bank> getAllBanks();
     public boolean addOffice(long bankId, BankOffice bankOffice);
-    public boolean removeOffice(long bankId, BankOffice bankOffice);
     public List<BankOffice> getAllOfficesByBankId(long bankId);
     public boolean addEmployee(Bank bank, Employee employee);
-    public boolean removeEmployee(Bank bank, Employee employee);
     public boolean addClient(long bankId, User user);
-    public boolean removeClient(Bank bank, User user);
     public double calculateInterestRate(Bank bank);
     public boolean depositMoney(long bankId, double amount);
     public boolean withdrawMoney(Bank bank, double amount);
     public boolean approveCredit(Bank bank, CreditAccount account, Employee employee) throws CreditException;
+
     public List<Bank> getBanksSuitable(double sum, int countMonth) throws NotFoundException, CreditException;
+
     public boolean isBankSuitable(Bank bank, double sum) throws NotFoundException;
+
     public List<BankOffice> getBankOfficeSuitableInBank(Bank bank, double sum) throws NotFoundException;
+
+    public boolean transferClient(User user, long newBankId);
 }

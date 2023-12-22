@@ -1,5 +1,8 @@
 package tech.reliab.course.andreevir.bank.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class BankOffice {
     private static long currentId = 0;
     private long id;
@@ -13,6 +16,8 @@ public class BankOffice {
     private boolean isCashDepositAvailable = false;
     private double totalMoney = 0;
     private double rentPrice = 0;
+    private List<Employee> employees = new ArrayList<>();
+    private List<BankAtm> bankAtms = new ArrayList<>();
 
     private void initializeId() {
         id = currentId++;
@@ -176,5 +181,21 @@ public class BankOffice {
 
     public double getRentPrice() {
         return rentPrice;
+    }
+
+    public void addEmployee(Employee employee) {
+        employees.add(employee);
+    }
+
+    public List<Employee> getEmployees() {
+        return employees;
+    }
+
+    public void addAtm(BankAtm bankAtm) {
+        bankAtms.add(bankAtm);
+    }
+
+    public List<BankAtm> getAtms() {
+        return bankAtms;
     }
 }

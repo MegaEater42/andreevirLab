@@ -10,7 +10,6 @@ public class BankAtm {
     private BankAtmStatus status = BankAtmStatus.CLOSED;
     private Bank bank = null;
     private BankOffice bankOffice = null;
-    private Employee employee = null;
     private boolean isCashWithdrawalAvailable = false;
     private boolean isCashDepositAvailable = false;
     private double totalMoney = 0;
@@ -24,14 +23,13 @@ public class BankAtm {
         initializeId();
     }
 
-    public BankAtm(String name, String address, BankAtmStatus status, Bank bank, BankOffice bankOffice, Employee employee, boolean isCashWithdrawalAvailable, boolean isCashDepositAvailable, double totalMoney, double maintenanceCost) {
+    public BankAtm(String name, String address, BankAtmStatus status, Bank bank, BankOffice bankOffice, boolean isCashWithdrawalAvailable, boolean isCashDepositAvailable, double totalMoney, double maintenanceCost) {
         initializeId();
         this.name = name;
         this.address = address;
         this.status = status;
         this.bank = bank;
         this.bankOffice = bankOffice;
-        this.employee = employee;
         this.isCashWithdrawalAvailable = isCashWithdrawalAvailable;
         this.isCashDepositAvailable = isCashDepositAvailable;
         this.totalMoney = totalMoney;
@@ -45,7 +43,6 @@ public class BankAtm {
         this.status = bankAtm.getStatus();
         this.bank = bankAtm.getBank();
         this.bankOffice = bankAtm.getBankOffice();
-        this.employee = bankAtm.getEmployee();
         this.isCashWithdrawalAvailable = bankAtm.getIsCashWithdrawalAvailable();
         this.isCashDepositAvailable = bankAtm.getIsCashDepositAvailable();
         this.totalMoney = bankAtm.getTotalMoney();
@@ -61,7 +58,6 @@ public class BankAtm {
                     "\tstatus: " + status.name() + ",\n" +
                     "\tbank: " + (bank == null ? "null" : bank.getName()) + ",\n" +
                     "\tbankOffice: " + (bankOffice == null ? "null" : bankOffice.getName()) + ",\n" +
-                    "\temployee: " + (employee == null ? "null" : employee.getName()) + ",\n" +
                     "\tisCashWithdrawalAvailable: " + isCashWithdrawalAvailable + ",\n" +
                     "\tisCashDepositAvailable: " + isCashDepositAvailable + ",\n" +
                     "\ttotalMoney: " + String.format("%.2f", totalMoney) + ",\n" +
@@ -115,14 +111,6 @@ public class BankAtm {
 
     public BankOffice getBankOffice() {
         return bankOffice;
-    }
-
-    public void setEmployee(Employee employee) {
-        this.employee = employee;
-    }
-
-    public Employee getEmployee() {
-        return employee;
     }
 
     public void setIsCashWithdrawalAvailable(boolean isCashWithdrawalAvailable) {

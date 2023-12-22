@@ -1,10 +1,22 @@
 package tech.reliab.course.andreevir.bank.service.impl;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.stream.JsonReader;
+import tech.reliab.course.andreevir.bank.entity.Bank;
+import tech.reliab.course.andreevir.bank.entity.CreditAccount;
 import tech.reliab.course.andreevir.bank.entity.PaymentAccount;
+import tech.reliab.course.andreevir.bank.entity.User;
+import tech.reliab.course.andreevir.bank.exception.AccountTransferException;
 import tech.reliab.course.andreevir.bank.exception.UniquenessException;
+import tech.reliab.course.andreevir.bank.service.BankService;
+import tech.reliab.course.andreevir.bank.service.CreditAccountService;
 import tech.reliab.course.andreevir.bank.service.PaymentAccountService;
 import tech.reliab.course.andreevir.bank.service.UserService;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,9 +25,19 @@ import java.util.Map;
 public class PaymentAccountServiceImpl implements PaymentAccountService {
     private final Map<Long, PaymentAccount> paymentAccountsTable = new HashMap<>();
     private final UserService userService;
+    private BankService bankService;
+    private CreditAccountService creditAccountService;
 
     public PaymentAccountServiceImpl(UserService userService) {
         this.userService = userService;
+    }
+
+    public void setCreditAccountService(CreditAccountService creditAccountService) {
+        this.creditAccountService = creditAccountService;
+    }
+
+    public void setBankService(BankService bankService) {
+        this.bankService = bankService;
     }
 
     public PaymentAccount create(PaymentAccount paymentAccount) throws UniquenessException {
@@ -102,6 +124,42 @@ public class PaymentAccountServiceImpl implements PaymentAccountService {
         }
 
         account.setBalance(account.getBalance() - amount);
+
+        return true;
+    }
+
+    public boolean importAccountsFromTxtAndTransferToAnotherBank(String fileName, long newBankId) throws AccountTransferException {
+        File file = new File(fileName);
+        if (!file.exists())
+            throw new AccountTransferException("File not found!");
+
+        Gson gson = new GsonBuilder()
+                .setPrettyPrinting()
+                .excludeFieldsWithoutExposeAnnotation()
+                .create();
+        JsonReader reader = null;
+
+        try {
+            reader = new JsonReader(new FileReader(fileName));
+        } catch (FileNotFoundException ignored) {}
+
+        assert reader != null;
+        CreditAccount[] accounts = gson.fromJson(reader, CreditAccount[].class);
+
+        for (CreditAccount a : accounts) {
+            CreditAccount creditAccount = creditAccountService.getCreditAccountById(a.getId());
+            if (creditAccount.getBank().getId() == newBankId) {
+                System.out.println("Account with id: " + creditAccount.getId() + " already belongs to selected bank!");
+            } else {
+                Bank newBank = bankService.getBankById(newBankId);
+                creditAccount.setBank(newBank);
+                creditAccount.getPaymentAccount().setBank(newBank);
+            }
+
+            User user = userService.getUserById(creditAccount.getUser().getId());
+            if (user.getBank().getId() != newBankId)
+                userService.transferUserToAnotherBank(user, newBankId);
+        }
 
         return true;
     }
