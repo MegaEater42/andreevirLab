@@ -4,8 +4,8 @@ import tech.reliab.course.andreevir.bank.entity.Bank;
 import tech.reliab.course.andreevir.bank.entity.User;
 
 public class Account {
-    private static int currentId = 0;
-    protected int id;
+    private static long currentId = 0;
+    protected long id;
     protected User user = null;
     protected Bank bank = null;
 
@@ -23,17 +23,17 @@ public class Account {
         this.bank = bank;
     }
 
-    public Account(int id, User user, Bank bank) {
+    public Account(long id, User user, Bank bank) {
         this.id = id;
         this.user = user;
         this.bank = bank;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 

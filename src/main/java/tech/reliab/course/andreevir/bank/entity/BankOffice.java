@@ -1,8 +1,8 @@
 package tech.reliab.course.andreevir.bank.entity;
 
 public class BankOffice {
-    private static int currentId;
-    private int id;
+    private static long currentId = 0;
+    private long id;
     private String name = "null";
     private String address = "null";
     private Bank bank = null;
@@ -90,11 +90,11 @@ public class BankOffice {
                 "}\n";
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 

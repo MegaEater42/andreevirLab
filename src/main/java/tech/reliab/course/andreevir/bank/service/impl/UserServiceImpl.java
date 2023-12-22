@@ -3,10 +3,14 @@ package tech.reliab.course.andreevir.bank.service.impl;
 import tech.reliab.course.andreevir.bank.entity.CreditAccount;
 import tech.reliab.course.andreevir.bank.entity.PaymentAccount;
 import tech.reliab.course.andreevir.bank.entity.User;
+import tech.reliab.course.andreevir.bank.exception.NoPaymentAccountException;
+import tech.reliab.course.andreevir.bank.exception.NotFoundException;
+import tech.reliab.course.andreevir.bank.exception.UniquenessException;
 import tech.reliab.course.andreevir.bank.service.BankService;
 import tech.reliab.course.andreevir.bank.service.UserService;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +34,7 @@ public class UserServiceImpl implements UserService {
         return rating;
     }
 
-    public User create(User user) {
+    public User create(User user) throws UniquenessException {
         if (user == null) {
             return null;
         }
@@ -46,6 +50,10 @@ public class UserServiceImpl implements UserService {
         }
 
         User createdUser = new User(user);
+
+        if (usersTable.containsKey(createdUser.getId())) {
+            throw new UniquenessException("User", createdUser.getId());
+        }
 
         final Random random = new Random();
 
@@ -75,17 +83,13 @@ public class UserServiceImpl implements UserService {
             List<PaymentAccount> paymentAccounts = paymentAccountsByUserIdTable.get(id);
             if (paymentAccounts != null) {
                 System.out.println("Payment accounts:");
-                paymentAccounts.forEach((PaymentAccount paymentAccount) -> {
-                    System.out.println(paymentAccount);
-                });
+                paymentAccounts.forEach(System.out::println);
             }
 
             List<CreditAccount> creditAccounts = creditAccountsByUserIdTable.get(id);
             if (creditAccounts != null) {
                 System.out.println("Credit accounts:");
-                creditAccounts.forEach((CreditAccount creditAccount) -> {
-                    System.out.println(creditAccount);
-                });
+                creditAccounts.forEach(System.out::println);
             }
         }
     }
@@ -127,7 +131,15 @@ public class UserServiceImpl implements UserService {
     }
 
     public List<PaymentAccount> getAllPaymentAccountsByUserId(long userId) {
-        List<PaymentAccount> userPaymentAccounts = paymentAccountsByUserIdTable.get(userId);
-        return userPaymentAccounts;
+        return paymentAccountsByUserIdTable.get(userId);
+    }
+
+    public PaymentAccount getBestPaymentAccount(long id) throws NotFoundException, NoPaymentAccountException {
+        List<PaymentAccount> paymentAccounts = getAllPaymentAccountsByUserId(id);
+
+        return paymentAccounts
+                .stream()
+                .min(Comparator.comparing(PaymentAccount::getBalance))
+                .orElseThrow(NoPaymentAccountException::new);
     }
 }

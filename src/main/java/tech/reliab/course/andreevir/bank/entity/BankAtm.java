@@ -3,8 +3,8 @@ package tech.reliab.course.andreevir.bank.entity;
 import tech.reliab.course.andreevir.bank.util.BankAtmStatus;
 
 public class BankAtm {
-    private static int currentId;
-    private int id;
+    private static long currentId = 0;
+    private long id;
     private String name;
     private String address;
     private BankAtmStatus status = BankAtmStatus.CLOSED;
@@ -69,11 +69,11 @@ public class BankAtm {
                 "}\n";
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 

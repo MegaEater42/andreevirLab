@@ -1,6 +1,7 @@
 package tech.reliab.course.andreevir.bank.service.impl;
 
 import tech.reliab.course.andreevir.bank.entity.BankAtm;
+import tech.reliab.course.andreevir.bank.exception.UniquenessException;
 import tech.reliab.course.andreevir.bank.service.BankAtmService;
 import tech.reliab.course.andreevir.bank.service.BankOfficeService;
 
@@ -10,14 +11,14 @@ import java.util.List;
 import java.util.Map;
 
 public class BankAtmServiceImpl implements BankAtmService {
-    private final Map<Integer, BankAtm> atmsTable = new HashMap<>();
+    private final Map<Long, BankAtm> atmsTable = new HashMap<>();
     private final BankOfficeService bankOfficeService;
 
     public BankAtmServiceImpl(BankOfficeService bankOfficeService) {
         this.bankOfficeService = bankOfficeService;
     }
 
-    public BankAtm create(BankAtm bankAtm) {
+    public BankAtm create(BankAtm bankAtm) throws UniquenessException {
         if (bankAtm == null) {
             return null;
         }
@@ -42,15 +43,19 @@ public class BankAtmServiceImpl implements BankAtmService {
             return null;
         }
 
-        BankAtm createdBankAtm =  new BankAtm(bankAtm);
+        BankAtm atm =  new BankAtm(bankAtm);
 
-        atmsTable.put(createdBankAtm.getId(), createdBankAtm);
-        bankOfficeService.installAtm(createdBankAtm.getBankOffice().getId(), createdBankAtm);
+        if (atmsTable.containsKey(atm.getId())) {
+            throw new UniquenessException("ATM", atm.getId());
+        }
 
-        return createdBankAtm;
+        atmsTable.put(atm.getId(), atm);
+        bankOfficeService.installAtm(atm.getBankOffice().getId(), atm);
+
+        return atm;
     }
 
-    public BankAtm getBankAtmById(int id) {
+    public BankAtm getBankAtmById(long id) {
         BankAtm bankAtm = atmsTable.get(id);
 
         if (bankAtm == null) {
@@ -111,5 +116,9 @@ public class BankAtmServiceImpl implements BankAtmService {
         // Вычитать деньги из офиса и банка
 
         return true;
+    }
+
+    public boolean isAtmSuitable(BankAtm bankAtm, double sum) {
+        return bankAtm.getTotalMoney() >= sum;
     }
 }

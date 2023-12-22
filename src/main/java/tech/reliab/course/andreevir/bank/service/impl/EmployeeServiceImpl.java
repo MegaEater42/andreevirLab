@@ -2,6 +2,7 @@ package tech.reliab.course.andreevir.bank.service.impl;
 
 import tech.reliab.course.andreevir.bank.entity.BankOffice;
 import tech.reliab.course.andreevir.bank.entity.Employee;
+import tech.reliab.course.andreevir.bank.exception.UniquenessException;
 import tech.reliab.course.andreevir.bank.service.BankOfficeService;
 import tech.reliab.course.andreevir.bank.service.EmployeeService;
 
@@ -18,7 +19,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         this.bankOfficeService = bankOfficeService;
     }
 
-    public Employee create(Employee employee) {
+    public Employee create(Employee employee) throws UniquenessException {
         if (employee == null) {
             return null;
         }
@@ -40,13 +41,17 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         Employee createdEmployee = new Employee(employee);
 
+        if (employeesTable.containsKey(createdEmployee.getId())) {
+            throw new UniquenessException("Employee", createdEmployee.getId());
+        }
+
         employeesTable.put(createdEmployee.getId(), createdEmployee);
         bankOfficeService.addEmployee(employee.getBankOffice().getId(), createdEmployee);
 
         return createdEmployee;
     }
 
-    public Employee getEmployeeById(int id) {
+    public Employee getEmployeeById(long id) {
         Employee employee = employeesTable.get(id);
 
         if (employee == null) {
@@ -57,12 +62,15 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     public List<Employee> getAllEmployees() {
-        return new ArrayList<Employee>(employeesTable.values());
+        return new ArrayList<>(employeesTable.values());
     }
 
     public boolean transferEmployee(Employee employee, BankOffice bankOffice) {
         // написать перевод сотрудника в новый офис когда будут массивы офисов и тд
-
         return true;
+    }
+
+    public boolean isEmployeeSuitable(Employee employee) {
+        return employee.getIsCreditAvailable();
     }
 }

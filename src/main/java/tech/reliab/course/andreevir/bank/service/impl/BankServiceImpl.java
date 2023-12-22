@@ -5,10 +5,14 @@ import tech.reliab.course.andreevir.bank.entity.BankOffice;
 import tech.reliab.course.andreevir.bank.entity.CreditAccount;
 import tech.reliab.course.andreevir.bank.entity.Employee;
 import tech.reliab.course.andreevir.bank.entity.User;
+import tech.reliab.course.andreevir.bank.exception.CreditException;
+import tech.reliab.course.andreevir.bank.exception.NotFoundException;
+import tech.reliab.course.andreevir.bank.exception.UniquenessException;
 import tech.reliab.course.andreevir.bank.service.BankOfficeService;
 import tech.reliab.course.andreevir.bank.service.BankService;
 import tech.reliab.course.andreevir.bank.service.UserService;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,9 +24,9 @@ import static tech.reliab.course.andreevir.bank.util.Constants.MAX_BANK_RATING;
 import static tech.reliab.course.andreevir.bank.util.Constants.MAX_BANK_TOTAL_MONEY;
 
 public class BankServiceImpl implements BankService {
-    private final Map<Integer, Bank> banksTable = new HashMap<>();
-    private final Map<Integer, List<BankOffice>> officesByBankIdTable = new HashMap<>();
-    private final Map<Integer, List<User>> usersByBankIdTable = new HashMap<>();
+    private final Map<Long, Bank> banksTable = new HashMap<>();
+    private final Map<Long, List<BankOffice>> officesByBankIdTable = new HashMap<>();
+    private final Map<Long, List<User>> usersByBankIdTable = new HashMap<>();
     private BankOfficeService bankOfficeService;
     private UserService userService;
 
@@ -50,7 +54,7 @@ public class BankServiceImpl implements BankService {
         return 0;
     }
 
-    public Bank create(Bank bank) {
+    public Bank create(Bank bank) throws UniquenessException {
         if (bank == null) {
             return null;
         }
@@ -68,16 +72,18 @@ public class BankServiceImpl implements BankService {
         createdBank.setTotalMoney(random.nextDouble() * MAX_BANK_TOTAL_MONEY);
         calculateInterestRate(createdBank);
 
-        if (createdBank != null) {
-            banksTable.put(createdBank.getId(), createdBank);
-            officesByBankIdTable.put(createdBank.getId(), new ArrayList<>());
-            usersByBankIdTable.put(createdBank.getId(), new ArrayList<>());
+        if (banksTable.containsKey((createdBank.getId()))) {
+            throw new UniquenessException("Bank", createdBank.getId());
         }
+
+        banksTable.put(createdBank.getId(), createdBank);
+        officesByBankIdTable.put(createdBank.getId(), new ArrayList<>());
+        usersByBankIdTable.put(createdBank.getId(), new ArrayList<>());
 
         return createdBank;
     }
 
-    public void printBankData(int id) {
+    public void printBankData(long id) {
         Bank bank = banksTable.get(id);
 
         if (bank == null) {
@@ -106,7 +112,7 @@ public class BankServiceImpl implements BankService {
         System.out.println("=========================");
     }
 
-    public Bank getBankById(int id) {
+    public Bank getBankById(long id) {
         Bank bank = banksTable.get(id);
 
         if (bank == null) {
@@ -120,7 +126,7 @@ public class BankServiceImpl implements BankService {
         return new ArrayList<Bank>(banksTable.values());
     }
 
-    public boolean addOffice(int bankId, BankOffice bankOffice) {
+    public boolean addOffice(long bankId, BankOffice bankOffice) {
         Bank bank = getBankById(bankId);
 
         if (bank != null && bankOffice != null) {
@@ -132,67 +138,50 @@ public class BankServiceImpl implements BankService {
         return false;
     }
 
-    public boolean removeOffice(int bankId, BankOffice bankOffice) {
+    public boolean removeOffice(long bankId, BankOffice bankOffice) {
         Bank bank = getBankById(bankId);
         int officeIndex = officesByBankIdTable.get(bankId).indexOf(bankOffice);
 
         if (bank != null && officeIndex >= 0) {
-            // final short newOfficeCount = (short)(bank.getOfficeCount() - 1);
-
-            // if (newOfficeCount < 0) {
-            //   System.out.println("Error: cannot remove office, bank has no offices");
-            //   return false;
-            // }
-
             officesByBankIdTable.get(bankId).remove(officeIndex);
-
             return true;
         }
         return false;
     }
 
-    public List<BankOffice> getAllOfficesByBankId(int bankId) {
+    public List<BankOffice> getAllOfficesByBankId(long bankId) {
         Bank bank = getBankById(bankId);
 
         if (bank != null) {
-            List<BankOffice> bankOffices = officesByBankIdTable.get(bankId);
-
-            return bankOffices;
+            return officesByBankIdTable.get(bankId);
         }
+
         return new ArrayList<>();
     }
 
     public boolean addEmployee(Bank bank, Employee employee) {
         if (bank != null && employee != null) {
             employee.setBank(bank);
-            bank.setEmployeeCount(bank.getEmployeeCount() + 1);
             return true;
         }
         return false;
     }
 
     public boolean removeEmployee(Bank bank, Employee employee) {
-        if (bank != null && employee != null) {
-            final int newEmployeeCount = bank.getEmployeeCount() - 1;
-
-            if (newEmployeeCount < 0) {
-                System.out.println("Error: cannot remove employee, bank has no employees");
-                return false;
-            }
-
-            bank.setEmployeeCount(newEmployeeCount);
-
-            return true;
-        }
-        return false;
+        // final int newEmployeeCount = bank.getEmployeeCount() - 1;
+        // if (newEmployeeCount < 0) {
+        //   System.out.println("Error: cannot remove employee, bank has no employees");
+        //   return false;
+        // }
+        // bank.setEmployeeCount(newEmployeeCount);
+        return bank != null && employee != null;
     }
 
-    public boolean addClient(int bankId, User user) {
+    public boolean addClient(long bankId, User user) {
         Bank bank = getBankById(bankId);
 
         if (bank != null && user != null) {
             user.setBank(bank);
-            bank.setUserCount(bank.getUserCount() + 1);
             List<User> users = usersByBankIdTable.get(bankId);
             users.add(user);
             return true;
@@ -201,21 +190,16 @@ public class BankServiceImpl implements BankService {
     }
 
     public boolean removeClient(Bank bank, User user) {
-        if (bank != null && user != null) {
-            int newUserCount = bank.getUserCount() - 1;
-
-            if (newUserCount < 0) {
-                System.out.println("Error: cannot remove user, bank has no users");
-                return false;
-            }
-
-            bank.setUserCount(newUserCount);
-            return true;
-        }
-        return false;
+        // int newUserCount = bank.getUserCount() - 1;
+        // if (newsUserCount < 0) {
+        //   System.out.println("Error: cannot remove user, bank has no users");
+        //   return false;
+        // }
+        // bank.setUserCount(newUserCount);
+        return bank != null && user != null;
     }
 
-    public boolean depositMoney(int bankId, double amount) {
+    public boolean depositMoney(long bankId, double amount) {
         Bank bank = getBankById(bankId);
 
         if (bank == null) {
@@ -252,7 +236,68 @@ public class BankServiceImpl implements BankService {
         return true;
     }
 
-    public boolean approveCredit(Bank bank, CreditAccount account, Employee employee) {
-        return false; // дописать когда станет понятнее логика кредитов
+    public boolean approveCredit(Bank bank, CreditAccount account, Employee employee) throws CreditException {
+        if (account != null && bank != null && employee != null) {
+            double sum = account.getCreditAmount();
+
+            if (bank.getTotalMoney() >= sum && employee.getIsCreditAvailable()) {
+                double bankInterestRateMultiplier = 1 + (bank.getInterestRate() / 100);
+                double sumMonthPay = sum * bankInterestRateMultiplier / account.getMonthCount();
+
+                if (account.getUser().getMonthlyIncome() >= sumMonthPay) {
+                    if (account.getUser().getCreditRating() < 5000 && bank.getRating() > 50) {
+                        throw new CreditException("User credit rating is too low");
+                    }
+
+                    account.setEmployee(employee);
+                    account.setMonthlyPayment(sumMonthPay);
+                    account.setBank(bank);
+                    account.setInterestRate(bank.getInterestRate());
+
+                    LocalDate dateEnd = account.getDateStart();
+                    dateEnd = dateEnd.plusMonths(account.getMonthCount());
+                    account.setDateEnd(dateEnd);
+
+                    return true;
+                } else {
+                    throw new CreditException("User income is too low");
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public List<BankOffice> getBankOfficeSuitableInBank(Bank bank, double sum) throws NotFoundException {
+        List<BankOffice> bankOfficesByBank = getAllOfficesByBankId(bank.getId());
+        List<BankOffice> suitableBankOffice = new ArrayList<>();
+
+        for (BankOffice bankOffice : bankOfficesByBank) {
+            if (bankOfficeService.isSuitableBankOffice(bankOffice, sum)) {
+                suitableBankOffice.add(bankOffice);
+            }
+        }
+
+        return suitableBankOffice;
+    }
+
+    public boolean isBankSuitable(Bank bank, double sum) throws NotFoundException {
+        List<BankOffice> bankOfficeSuitable = getBankOfficeSuitableInBank(bank, sum);
+        return !bankOfficeSuitable.isEmpty();
+    }
+
+    public List<Bank> getBanksSuitable(double sum, int countMonth) throws NotFoundException, CreditException {
+        List<Bank> banksSuitable = new ArrayList<>();
+        for (Bank bank : banksTable.values()) {
+            if (isBankSuitable(bank, sum)) {
+                banksSuitable.add(bank);
+            }
+        }
+
+        if (banksSuitable.isEmpty()) {
+            throw new CreditException("No suitable bank found for credit with passed parameters.");
+        }
+
+        return banksSuitable;
     }
 }

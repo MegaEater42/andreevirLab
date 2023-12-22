@@ -3,8 +3,12 @@ package tech.reliab.course.andreevir.bank.service.impl;
 import tech.reliab.course.andreevir.bank.entity.BankAtm;
 import tech.reliab.course.andreevir.bank.entity.BankOffice;
 import tech.reliab.course.andreevir.bank.entity.Employee;
+import tech.reliab.course.andreevir.bank.exception.NotFoundException;
+import tech.reliab.course.andreevir.bank.exception.UniquenessException;
+import tech.reliab.course.andreevir.bank.service.BankAtmService;
 import tech.reliab.course.andreevir.bank.service.BankOfficeService;
 import tech.reliab.course.andreevir.bank.service.BankService;
+import tech.reliab.course.andreevir.bank.service.EmployeeService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,16 +16,26 @@ import java.util.List;
 import java.util.Map;
 
 public class BankOfficeServiceImpl implements BankOfficeService {
-    private final Map<Integer, BankOffice> bankOfficesTable = new HashMap<>();
-    private final Map<Integer, List<Employee>> employeesByOfficeIdTable = new HashMap<>();
-    private final Map<Integer, List<BankAtm>> atmsByOfficeIdTable = new HashMap<>();
+    private final Map<Long, BankOffice> bankOfficesTable = new HashMap<>();
+    private final Map<Long, List<Employee>> employeesByOfficeIdTable = new HashMap<>();
+    private final Map<Long, List<BankAtm>> atmsByOfficeIdTable = new HashMap<>();
     private final BankService bankService;
+    private EmployeeService employeeService;
+    private BankAtmService atmService;
 
     public BankOfficeServiceImpl(BankService bankService) {
         this.bankService = bankService;
     }
 
-    public BankOffice create(BankOffice bankOffice) {
+    public void setAtmService(BankAtmService atmService) {
+        this.atmService = atmService;
+    }
+
+    public void setEmployeeService(EmployeeService employeeService) {
+        this.employeeService = employeeService;
+    }
+
+    public BankOffice create(BankOffice bankOffice) throws UniquenessException {
         if (bankOffice == null) {
             return null;
         }
@@ -46,6 +60,10 @@ public class BankOfficeServiceImpl implements BankOfficeService {
             return null;
         }
 
+        if (bankOfficesTable.containsKey(bankOffice.getId())) {
+            throw new UniquenessException("BankOffice", bankOffice.getId());
+        }
+
         bankOfficesTable.put(bankOffice.getId(), bankOffice);
         employeesByOfficeIdTable.put(bankOffice.getId(), new ArrayList<>());
         atmsByOfficeIdTable.put(bankOffice.getId(), new ArrayList<>());
@@ -54,7 +72,7 @@ public class BankOfficeServiceImpl implements BankOfficeService {
         return new BankOffice(bankOffice);
     }
 
-    public void printBankOfficeData(int id) {
+    public void printBankOfficeData(long id) {
         BankOffice bankOffice = bankOfficesTable.get(id);
 
         if (bankOffice == null) {
@@ -66,21 +84,17 @@ public class BankOfficeServiceImpl implements BankOfficeService {
         List<Employee> employees = employeesByOfficeIdTable.get(id);
         if (employees != null) {
             System.out.println("Employees:");
-            employees.forEach((Employee employee) -> {
-                System.out.println(employee);
-            });
+            employees.forEach(System.out::println);
         }
 
         List<BankAtm> atms = atmsByOfficeIdTable.get(id);
         if (atms != null) {
             System.out.println("ATMs:");
-            atms.forEach((BankAtm atm) -> {
-                System.out.println(atm);
-            });
+            atms.forEach(System.out::println);
         }
     }
 
-    public BankOffice getBankOfficeById(int id) {
+    public BankOffice getBankOfficeById(long id) {
         BankOffice office = bankOfficesTable.get(id);
 
         if (office == null) {
@@ -94,11 +108,11 @@ public class BankOfficeServiceImpl implements BankOfficeService {
         return new ArrayList<BankOffice>(bankOfficesTable.values());
     }
 
-    public List<Employee> getAllEmployeesByOfficeId(int officeId) {
+    public List<Employee> getAllEmployeesByOfficeId(long officeId) {
         return employeesByOfficeIdTable.get(officeId);
     }
 
-    public boolean installAtm(int bankOfficeId, BankAtm bankAtm) {
+    public boolean installAtm(long bankOfficeId, BankAtm bankAtm) {
         BankOffice bankOffice = getBankOfficeById(bankOfficeId);
 
         if (bankOffice != null && bankAtm != null) {
@@ -180,7 +194,7 @@ public class BankOfficeServiceImpl implements BankOfficeService {
         return true;
     }
 
-    public boolean addEmployee(int bankOfficeId, Employee employee) {
+    public boolean addEmployee(long bankOfficeId, Employee employee) {
         BankOffice bankOffice = getBankOfficeById(bankOfficeId);
 
         if (bankOffice != null && employee != null) {
@@ -199,6 +213,52 @@ public class BankOfficeServiceImpl implements BankOfficeService {
             // добавить поиск работника в банке и его удаление
             return true;
         }
+        return false;
+    }
+
+    public List<BankAtm> getAllOfficeAtms(long id) {
+        return atmsByOfficeIdTable.get(id);
+    }
+
+    public List<BankAtm> getSuitableBankAtmInOffice(BankOffice bankOffice, double sum) {
+        List<BankAtm> bankAtmByOffice = getAllOfficeAtms(bankOffice.getId());
+        List<BankAtm> suitableBankAtm = new ArrayList<>();
+
+        for (BankAtm bankAtm : bankAtmByOffice) {
+            if (atmService.isAtmSuitable(bankAtm, sum)) {
+                suitableBankAtm.add(bankAtm);
+            }
+        }
+
+        return suitableBankAtm;
+    }
+
+    public List<Employee> getSuitableEmployeeInOffice(BankOffice bankOffice) throws NotFoundException {
+        List<Employee> employees = getAllEmployeesByOfficeId(bankOffice.getId());
+        List<Employee> suitableEmployee = new ArrayList<>();
+
+        for (Employee employee : employees) {
+            if (employeeService.isEmployeeSuitable(employee)) {
+                suitableEmployee.add(employee);
+            }
+        }
+
+        return suitableEmployee;
+    }
+
+    public boolean isSuitableBankOffice(BankOffice bankOffice, double sum) throws NotFoundException {
+        if (bankOffice.getIsWorking() && bankOffice.getIsCashWithdrawalAvailable() && bankOffice.getTotalMoney() >= sum) {
+            List<BankAtm> bankAtmSuitable = getSuitableBankAtmInOffice(bankOffice, sum);
+            // System.out.println("Here bankAtmSuitable " + bankAtmSuitable.size());
+            if (bankAtmSuitable.isEmpty()) {
+                return false;
+            }
+
+            List<Employee> employeesSuitable = getSuitableEmployeeInOffice(bankOffice);
+            // System.out.println("Here employeesSuitable " + employeesSuitable.size());
+            return !employeesSuitable.isEmpty();
+        }
+
         return false;
     }
 }

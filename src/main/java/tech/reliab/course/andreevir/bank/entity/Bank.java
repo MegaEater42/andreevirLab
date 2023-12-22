@@ -2,8 +2,8 @@ package tech.reliab.course.andreevir.bank.entity;
 
 
 public class Bank {
-    private static int currentId;
-    private int id;
+    private static long currentId = 0;
+    private long id;
     private String name = "null";
     private int employeeCount = 0;
     private int userCount = 0;
@@ -24,7 +24,7 @@ public class Bank {
         this.name = name;
     }
 
-    public Bank(int id, String name) {
+    public Bank(long id, String name) {
         this.id = id;
         this.name = name;
     }
@@ -42,11 +42,11 @@ public class Bank {
                 "}\n";
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 

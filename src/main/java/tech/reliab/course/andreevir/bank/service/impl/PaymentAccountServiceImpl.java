@@ -1,6 +1,7 @@
 package tech.reliab.course.andreevir.bank.service.impl;
 
 import tech.reliab.course.andreevir.bank.entity.PaymentAccount;
+import tech.reliab.course.andreevir.bank.exception.UniquenessException;
 import tech.reliab.course.andreevir.bank.service.PaymentAccountService;
 import tech.reliab.course.andreevir.bank.service.UserService;
 
@@ -10,14 +11,14 @@ import java.util.List;
 import java.util.Map;
 
 public class PaymentAccountServiceImpl implements PaymentAccountService {
-    private final Map<Integer, PaymentAccount> paymentAccountsTable = new HashMap<>();
+    private final Map<Long, PaymentAccount> paymentAccountsTable = new HashMap<>();
     private final UserService userService;
 
     public PaymentAccountServiceImpl(UserService userService) {
         this.userService = userService;
     }
 
-    public PaymentAccount create(PaymentAccount paymentAccount) {
+    public PaymentAccount create(PaymentAccount paymentAccount) throws UniquenessException {
         if (paymentAccount == null) {
             return null;
         }
@@ -33,13 +34,18 @@ public class PaymentAccountServiceImpl implements PaymentAccountService {
         }
 
         PaymentAccount createdPaymentAccount = new PaymentAccount(paymentAccount);
+
+        if (paymentAccountsTable.containsKey(createdPaymentAccount.getId())) {
+            throw new UniquenessException("PaymentAccount", createdPaymentAccount.getId());
+        }
+
         paymentAccountsTable.put(createdPaymentAccount.getId(), createdPaymentAccount);
         userService.addPaymentAccount(createdPaymentAccount.getUser().getId(), createdPaymentAccount);
 
         return createdPaymentAccount;
     }
 
-    public void printPaymentData(int id) {
+    public void printPaymentData(long id) {
         PaymentAccount paymentAccount = paymentAccountsTable.get(id);
 
         if (paymentAccount == null) {
@@ -50,7 +56,7 @@ public class PaymentAccountServiceImpl implements PaymentAccountService {
         System.out.println(paymentAccount);
     }
 
-    public PaymentAccount getPaymentAccountById(int id) {
+    public PaymentAccount getPaymentAccountById(long id) {
         PaymentAccount paymentAccount = paymentAccountsTable.get(id);
 
         if (paymentAccount == null) {
