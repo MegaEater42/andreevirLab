@@ -5,8 +5,14 @@ import tech.reliab.course.andreevir.bank.entity.BankOffice;
 import tech.reliab.course.andreevir.bank.entity.CreditAccount;
 import tech.reliab.course.andreevir.bank.entity.Employee;
 import tech.reliab.course.andreevir.bank.entity.User;
+import tech.reliab.course.andreevir.bank.service.BankOfficeService;
 import tech.reliab.course.andreevir.bank.service.BankService;
+import tech.reliab.course.andreevir.bank.service.UserService;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import static tech.reliab.course.andreevir.bank.util.Constants.MAX_BANK_INTEREST_RATE;
@@ -14,6 +20,20 @@ import static tech.reliab.course.andreevir.bank.util.Constants.MAX_BANK_RATING;
 import static tech.reliab.course.andreevir.bank.util.Constants.MAX_BANK_TOTAL_MONEY;
 
 public class BankServiceImpl implements BankService {
+    private final Map<Integer, Bank> banksTable = new HashMap<>();
+    private final Map<Integer, List<BankOffice>> officesByBankIdTable = new HashMap<>();
+    private final Map<Integer, List<User>> usersByBankIdTable = new HashMap<>();
+    private BankOfficeService bankOfficeService;
+    private UserService userService;
+
+    public void setBankOfficeService(BankOfficeService bankOfficeService) {
+        this.bankOfficeService = bankOfficeService;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
     public double calculateInterestRate(Bank bank) {
         if (bank != null) {
             final Random random = new Random();
@@ -48,32 +68,98 @@ public class BankServiceImpl implements BankService {
         createdBank.setTotalMoney(random.nextDouble() * MAX_BANK_TOTAL_MONEY);
         calculateInterestRate(createdBank);
 
+        if (createdBank != null) {
+            banksTable.put(createdBank.getId(), createdBank);
+            officesByBankIdTable.put(createdBank.getId(), new ArrayList<>());
+            usersByBankIdTable.put(createdBank.getId(), new ArrayList<>());
+        }
+
         return createdBank;
     }
 
-    public boolean addOffice(Bank bank, BankOffice bankOffice) {
+    public void printBankData(int id) {
+        Bank bank = banksTable.get(id);
+
+        if (bank == null) {
+            System.out.println("Bank with id: " + id + " was not found.");
+            return;
+        }
+
+        System.out.println("=========================");
+        System.out.println(bank);
+        List<BankOffice> offices = officesByBankIdTable.get(id);
+        if (offices != null) {
+            System.out.println("Bank offices:");
+            offices.forEach((BankOffice office) -> {
+                bankOfficeService.printBankOfficeData(office.getId());
+                // System.out.println(office);
+            });
+        }
+
+        List<User> users = usersByBankIdTable.get(id);
+        if (users != null) {
+            System.out.println("Users:");
+            users.forEach((User user) -> {
+                userService.printUserData(user.getId(), false);
+            });
+        }
+        System.out.println("=========================");
+    }
+
+    public Bank getBankById(int id) {
+        Bank bank = banksTable.get(id);
+
+        if (bank == null) {
+            System.out.println("Bank with id: " + id + " was not found.");
+        }
+
+        return bank;
+    }
+
+    public List<Bank> getAllBanks() {
+        return new ArrayList<Bank>(banksTable.values());
+    }
+
+    public boolean addOffice(int bankId, BankOffice bankOffice) {
+        Bank bank = getBankById(bankId);
+
         if (bank != null && bankOffice != null) {
-            bankOffice.setBank(bank);
-            bank.setOfficeCount((short)(bank.getOfficeCount() + 1));
+            depositMoney(bankId, bankOffice.getTotalMoney());
+            List<BankOffice> bankOffices = officesByBankIdTable.get(bankId);
+            bankOffices.add(bankOffice);
             return true;
         }
         return false;
     }
 
-    public boolean removeOffice(Bank bank, BankOffice bankOffice) {
-        if (bank != null && bankOffice != null) {
-            final short newOfficeCount = (short)(bank.getOfficeCount() - 1);
+    public boolean removeOffice(int bankId, BankOffice bankOffice) {
+        Bank bank = getBankById(bankId);
+        int officeIndex = officesByBankIdTable.get(bankId).indexOf(bankOffice);
 
-            if (newOfficeCount < 0) {
-                System.out.println("Error: cannot remove office, bank has no offices");
-                return false;
-            }
+        if (bank != null && officeIndex >= 0) {
+            // final short newOfficeCount = (short)(bank.getOfficeCount() - 1);
 
-            bank.setOfficeCount(newOfficeCount);
+            // if (newOfficeCount < 0) {
+            //   System.out.println("Error: cannot remove office, bank has no offices");
+            //   return false;
+            // }
+
+            officesByBankIdTable.get(bankId).remove(officeIndex);
 
             return true;
         }
         return false;
+    }
+
+    public List<BankOffice> getAllOfficesByBankId(int bankId) {
+        Bank bank = getBankById(bankId);
+
+        if (bank != null) {
+            List<BankOffice> bankOffices = officesByBankIdTable.get(bankId);
+
+            return bankOffices;
+        }
+        return new ArrayList<>();
     }
 
     public boolean addEmployee(Bank bank, Employee employee) {
@@ -101,10 +187,14 @@ public class BankServiceImpl implements BankService {
         return false;
     }
 
-    public boolean addClient(Bank bank, User user) {
+    public boolean addClient(int bankId, User user) {
+        Bank bank = getBankById(bankId);
+
         if (bank != null && user != null) {
             user.setBank(bank);
             bank.setUserCount(bank.getUserCount() + 1);
+            List<User> users = usersByBankIdTable.get(bankId);
+            users.add(user);
             return true;
         }
         return false;
@@ -125,7 +215,9 @@ public class BankServiceImpl implements BankService {
         return false;
     }
 
-    public boolean depositMoney(Bank bank, double amount) {
+    public boolean depositMoney(int bankId, double amount) {
+        Bank bank = getBankById(bankId);
+
         if (bank == null) {
             System.out.println("Error: cannot deposit money to uninitialized bank");
             return false;

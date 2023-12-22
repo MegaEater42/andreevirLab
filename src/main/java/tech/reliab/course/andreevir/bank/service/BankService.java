@@ -6,16 +6,25 @@ import tech.reliab.course.andreevir.bank.entity.CreditAccount;
 import tech.reliab.course.andreevir.bank.entity.Employee;
 import tech.reliab.course.andreevir.bank.entity.User;
 
+import java.util.List;
+
 public interface BankService {
-    Bank create(Bank bank);
-    boolean addOffice(Bank bank, BankOffice bankOffice);
-    boolean removeOffice(Bank bank, BankOffice bankOffice);
-    boolean addEmployee(Bank bank, Employee employee);
-    boolean removeEmployee(Bank bank, Employee employee);
-    boolean addClient(Bank bank, User user);
-    boolean removeClient(Bank bank, User user);
-    double calculateInterestRate(Bank bank);
-    boolean depositMoney(Bank bank, double amount);
-    boolean withdrawMoney(Bank bank, double amount);
-    boolean approveCredit(Bank bank, CreditAccount account, Employee employee);
+    public void setBankOfficeService(BankOfficeService bankOfficeService);
+    public void setUserService(UserService userService);
+    public Bank create(Bank bank);
+    public void printBankData(int id);
+    public Bank getBankById(int id);
+    public List<Bank> getAllBanks();
+    public boolean addOffice(int bankId, BankOffice bankOffice);
+    public boolean removeOffice(int bankId, BankOffice bankOffice);
+    public List<BankOffice> getAllOfficesByBankId(int bankId);
+    public boolean addEmployee(Bank bank, Employee employee);
+    public boolean removeEmployee(Bank bank, Employee employee);
+    public boolean addClient(int bankId, User user);
+    public boolean removeClient(Bank bank, User user);
+    public double calculateInterestRate(Bank bank);
+    public boolean depositMoney(int bankId, double amount);
+    public boolean withdrawMoney(Bank bank, double amount);
+    public boolean approveCredit(Bank bank, CreditAccount account, Employee employee);
+
 }

@@ -2,8 +2,21 @@ package tech.reliab.course.andreevir.bank.service.impl;
 
 import tech.reliab.course.andreevir.bank.entity.CreditAccount;
 import tech.reliab.course.andreevir.bank.service.CreditAccountService;
+import tech.reliab.course.andreevir.bank.service.UserService;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class CreditAccountServiceImpl implements CreditAccountService {
+    private final Map<Integer, CreditAccount> creditAccountsTable = new HashMap<>();
+    private final UserService userService;
+
+    public CreditAccountServiceImpl(UserService userService) {
+        this.userService = userService;
+    }
+
     public CreditAccount create(CreditAccount creditAccount) {
         if (creditAccount == null) {
             return null;
@@ -33,7 +46,25 @@ public class CreditAccountServiceImpl implements CreditAccountService {
 
         // Проверять approve ли кредит банк
 
-        return new CreditAccount(creditAccount);
+        CreditAccount createdCreditAccount = new CreditAccount(creditAccount);
+        creditAccountsTable.put(createdCreditAccount.getId(), createdCreditAccount);
+        userService.addCreditAccount(createdCreditAccount.getUser().getId(), createdCreditAccount);
+
+        return createdCreditAccount;
+    }
+
+    public CreditAccount getCreditAccountById(int id) {
+        CreditAccount creditAccount = creditAccountsTable.get(id);
+
+        if (creditAccount == null) {
+            System.out.println("Credit account with id: " + id + " was not found.");
+        }
+
+        return creditAccount;
+    }
+
+    public List<CreditAccount> getAllCreditAccounts() {
+        return new ArrayList<CreditAccount>(creditAccountsTable.values());
     }
 
     public boolean makeMonthlyPayment(CreditAccount account) {

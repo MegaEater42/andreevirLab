@@ -2,8 +2,21 @@ package tech.reliab.course.andreevir.bank.service.impl;
 
 import tech.reliab.course.andreevir.bank.entity.BankAtm;
 import tech.reliab.course.andreevir.bank.service.BankAtmService;
+import tech.reliab.course.andreevir.bank.service.BankOfficeService;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BankAtmServiceImpl implements BankAtmService {
+    private final Map<Integer, BankAtm> atmsTable = new HashMap<>();
+    private final BankOfficeService bankOfficeService;
+
+    public BankAtmServiceImpl(BankOfficeService bankOfficeService) {
+        this.bankOfficeService = bankOfficeService;
+    }
+
     public BankAtm create(BankAtm bankAtm) {
         if (bankAtm == null) {
             return null;
@@ -29,7 +42,26 @@ public class BankAtmServiceImpl implements BankAtmService {
             return null;
         }
 
-        return new BankAtm(bankAtm);
+        BankAtm createdBankAtm =  new BankAtm(bankAtm);
+
+        atmsTable.put(createdBankAtm.getId(), createdBankAtm);
+        bankOfficeService.installAtm(createdBankAtm.getBankOffice().getId(), createdBankAtm);
+
+        return createdBankAtm;
+    }
+
+    public BankAtm getBankAtmById(int id) {
+        BankAtm bankAtm = atmsTable.get(id);
+
+        if (bankAtm == null) {
+            System.out.println("ATM with id: " + id + " was not found.");
+        }
+
+        return bankAtm;
+    }
+
+    public List<BankAtm> getAllBankAtms() {
+        return new ArrayList<BankAtm>(atmsTable.values());
     }
 
     public boolean depositMoney(BankAtm bankAtm, double amount) {

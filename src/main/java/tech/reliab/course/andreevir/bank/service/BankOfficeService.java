@@ -4,12 +4,18 @@ import tech.reliab.course.andreevir.bank.entity.BankAtm;
 import tech.reliab.course.andreevir.bank.entity.BankOffice;
 import tech.reliab.course.andreevir.bank.entity.Employee;
 
+import java.util.List;
+
 public interface BankOfficeService {
     BankOffice create(BankOffice bankOffice);
-    boolean installAtm(BankOffice bankOffice, BankAtm bankAtm);
-    boolean removeAtm(BankOffice bankOffice, BankAtm bankAtm);
-    boolean depositMoney(BankOffice bankOffice, double amount);
-    boolean withdrawMoney(BankOffice bankOffice, double amount);
-    boolean addEmployee(BankOffice bankOffice, Employee employee);
-    boolean removeEmployee(BankOffice bankOffice, Employee employee);
+    public void printBankOfficeData(int id);
+    public BankOffice getBankOfficeById(int id);
+    public List<BankOffice> getAllOffices();
+    public List<Employee> getAllEmployeesByOfficeId(int officeId);
+    public boolean installAtm(int bankOfficeId, BankAtm bankAtm);
+    public boolean removeAtm(BankOffice bankOffice, BankAtm bankAtm);
+    public boolean depositMoney(BankOffice bankOffice, double amount);
+    public boolean withdrawMoney(BankOffice bankOffice, double amount);
+    public boolean addEmployee(int bankOfficeId, Employee employee);
+    public boolean removeEmployee(BankOffice bankOffice, Employee employee);
 }

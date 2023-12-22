@@ -2,8 +2,21 @@ package tech.reliab.course.andreevir.bank.service.impl;
 
 import tech.reliab.course.andreevir.bank.entity.PaymentAccount;
 import tech.reliab.course.andreevir.bank.service.PaymentAccountService;
+import tech.reliab.course.andreevir.bank.service.UserService;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class PaymentAccountServiceImpl implements PaymentAccountService {
+    private final Map<Integer, PaymentAccount> paymentAccountsTable = new HashMap<>();
+    private final UserService userService;
+
+    public PaymentAccountServiceImpl(UserService userService) {
+        this.userService = userService;
+    }
+
     public PaymentAccount create(PaymentAccount paymentAccount) {
         if (paymentAccount == null) {
             return null;
@@ -19,7 +32,36 @@ public class PaymentAccountServiceImpl implements PaymentAccountService {
             return null;
         }
 
-        return new PaymentAccount(paymentAccount);
+        PaymentAccount createdPaymentAccount = new PaymentAccount(paymentAccount);
+        paymentAccountsTable.put(createdPaymentAccount.getId(), createdPaymentAccount);
+        userService.addPaymentAccount(createdPaymentAccount.getUser().getId(), createdPaymentAccount);
+
+        return createdPaymentAccount;
+    }
+
+    public void printPaymentData(int id) {
+        PaymentAccount paymentAccount = paymentAccountsTable.get(id);
+
+        if (paymentAccount == null) {
+            System.out.println("Payment account with id: " + id + " was not found.");
+            return;
+        }
+
+        System.out.println(paymentAccount);
+    }
+
+    public PaymentAccount getPaymentAccountById(int id) {
+        PaymentAccount paymentAccount = paymentAccountsTable.get(id);
+
+        if (paymentAccount == null) {
+            System.out.println("Payment account with id: " + id + " was not found.");
+        }
+
+        return paymentAccount;
+    }
+
+    public List<PaymentAccount> getAllPaymentAccounts() {
+        return new ArrayList<PaymentAccount>(paymentAccountsTable.values());
     }
 
     public boolean depositMoney(PaymentAccount account, double amount) {

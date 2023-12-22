@@ -2,9 +2,22 @@ package tech.reliab.course.andreevir.bank.service.impl;
 
 import tech.reliab.course.andreevir.bank.entity.BankOffice;
 import tech.reliab.course.andreevir.bank.entity.Employee;
+import tech.reliab.course.andreevir.bank.service.BankOfficeService;
 import tech.reliab.course.andreevir.bank.service.EmployeeService;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class EmployeeServiceImpl implements EmployeeService {
+    private final Map<Long, Employee> employeesTable = new HashMap<>();
+    private final BankOfficeService bankOfficeService;
+
+    public EmployeeServiceImpl(BankOfficeService bankOfficeService) {
+        this.bankOfficeService = bankOfficeService;
+    }
+
     public Employee create(Employee employee) {
         if (employee == null) {
             return null;
@@ -20,9 +33,31 @@ public class EmployeeServiceImpl implements EmployeeService {
             return null;
         }
 
-        // Добавить проверку на офис и добавление в офис
+        if (employee.getBankOffice() == null) {
+            System.out.println("Error: cannot create employee without office");
+            return null;
+        }
 
-        return new Employee(employee);
+        Employee createdEmployee = new Employee(employee);
+
+        employeesTable.put(createdEmployee.getId(), createdEmployee);
+        bankOfficeService.addEmployee(employee.getBankOffice().getId(), createdEmployee);
+
+        return createdEmployee;
+    }
+
+    public Employee getEmployeeById(int id) {
+        Employee employee = employeesTable.get(id);
+
+        if (employee == null) {
+            System.out.println("Employee with id: " + id + " was not found.");
+        }
+
+        return employee;
+    }
+
+    public List<Employee> getAllEmployees() {
+        return new ArrayList<Employee>(employeesTable.values());
     }
 
     public boolean transferEmployee(Employee employee, BankOffice bankOffice) {

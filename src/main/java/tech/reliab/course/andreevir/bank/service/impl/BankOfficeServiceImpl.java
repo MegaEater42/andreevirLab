@@ -4,8 +4,23 @@ import tech.reliab.course.andreevir.bank.entity.BankAtm;
 import tech.reliab.course.andreevir.bank.entity.BankOffice;
 import tech.reliab.course.andreevir.bank.entity.Employee;
 import tech.reliab.course.andreevir.bank.service.BankOfficeService;
+import tech.reliab.course.andreevir.bank.service.BankService;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BankOfficeServiceImpl implements BankOfficeService {
+    private final Map<Integer, BankOffice> bankOfficesTable = new HashMap<>();
+    private final Map<Integer, List<Employee>> employeesByOfficeIdTable = new HashMap<>();
+    private final Map<Integer, List<BankAtm>> atmsByOfficeIdTable = new HashMap<>();
+    private final BankService bankService;
+
+    public BankOfficeServiceImpl(BankService bankService) {
+        this.bankService = bankService;
+    }
+
     public BankOffice create(BankOffice bankOffice) {
         if (bankOffice == null) {
             return null;
@@ -31,21 +46,72 @@ public class BankOfficeServiceImpl implements BankOfficeService {
             return null;
         }
 
+        bankOfficesTable.put(bankOffice.getId(), bankOffice);
+        employeesByOfficeIdTable.put(bankOffice.getId(), new ArrayList<>());
+        atmsByOfficeIdTable.put(bankOffice.getId(), new ArrayList<>());
+        bankService.addOffice(bankOffice.getBank().getId(), bankOffice);
+
         return new BankOffice(bankOffice);
     }
 
-    public boolean installAtm(BankOffice bankOffice, BankAtm bankAtm) {
+    public void printBankOfficeData(int id) {
+        BankOffice bankOffice = bankOfficesTable.get(id);
+
+        if (bankOffice == null) {
+            System.out.println("Bank office with id: " + id + " was not found.");
+            return;
+        }
+
+        System.out.println(bankOffice);
+        List<Employee> employees = employeesByOfficeIdTable.get(id);
+        if (employees != null) {
+            System.out.println("Employees:");
+            employees.forEach((Employee employee) -> {
+                System.out.println(employee);
+            });
+        }
+
+        List<BankAtm> atms = atmsByOfficeIdTable.get(id);
+        if (atms != null) {
+            System.out.println("ATMs:");
+            atms.forEach((BankAtm atm) -> {
+                System.out.println(atm);
+            });
+        }
+    }
+
+    public BankOffice getBankOfficeById(int id) {
+        BankOffice office = bankOfficesTable.get(id);
+
+        if (office == null) {
+            System.out.println("Bank office with id: " + id + " was not found.");
+        }
+
+        return office;
+    }
+
+    public List<BankOffice> getAllOffices() {
+        return new ArrayList<BankOffice>(bankOfficesTable.values());
+    }
+
+    public List<Employee> getAllEmployeesByOfficeId(int officeId) {
+        return employeesByOfficeIdTable.get(officeId);
+    }
+
+    public boolean installAtm(int bankOfficeId, BankAtm bankAtm) {
+        BankOffice bankOffice = getBankOfficeById(bankOfficeId);
+
         if (bankOffice != null && bankAtm != null) {
             if (!bankOffice.getIsAtmPlaceable()) {
                 System.out.println("Error: cannot install atm at office " + bankOffice.getId());
                 return false;
             }
 
-            bankOffice.setAtmCount(bankOffice.getAtmCount() + 1);
             bankAtm.setBankOffice(bankOffice);
             bankAtm.setAddress(bankOffice.getAddress());
-            // Добавить добавление atm в банк
-
+            bankAtm.setBank(bankOffice.getBank());
+            List<BankAtm> officeAtms = atmsByOfficeIdTable.get(bankOffice.getId());
+            officeAtms.add(bankAtm);
             return true;
         }
         return false;
@@ -54,13 +120,12 @@ public class BankOfficeServiceImpl implements BankOfficeService {
     public boolean removeAtm(BankOffice bankOffice, BankAtm bankAtm) {
         if (bankOffice != null && bankAtm != null) {
             // Добавить поиск банкомата в офисе / банка и удаление оттуда
-            final int newAtmCountOffice = bankOffice.getAtmCount() - 1;
-            if (newAtmCountOffice < 0) {
-                System.out.println("Error: cannot remove ATM, office has no ATMs");
-                return false;
-            }
+            // final int newAtmCountOffice = bankOffice.getAtmCount() - 1;
+            // if (newAtmCountOffice < 0) {
+            //   System.out.println("Error: cannot remove ATM, office has no ATMs");
+            //   return false;
+            // }
 
-            bankOffice.setAtmCount(newAtmCountOffice);
             return true;
         }
         return false;
@@ -115,12 +180,14 @@ public class BankOfficeServiceImpl implements BankOfficeService {
         return true;
     }
 
-    public boolean addEmployee(BankOffice bankOffice, Employee employee) {
-        if (bankOffice != null && employee != null) {
-            employee.setBankOffice(bankOffice);;
-            employee.setBank(bankOffice.getBank());
-            // Добавить добавление работника в банк
+    public boolean addEmployee(int bankOfficeId, Employee employee) {
+        BankOffice bankOffice = getBankOfficeById(bankOfficeId);
 
+        if (bankOffice != null && employee != null) {
+            employee.setBankOffice(bankOffice);
+            employee.setBank(bankOffice.getBank());
+            List<Employee> officeEmployees = employeesByOfficeIdTable.get(bankOffice.getId());
+            officeEmployees.add(employee);
             return true;
         }
         return false;
